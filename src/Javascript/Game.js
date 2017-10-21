@@ -2,12 +2,16 @@ import Ship from './Objects/Ship';
 import * as Vector from './Utility/vector';
 
 let SHIP_ROTATION_SPEED = 0.08;
+let SHIP_MAX_SPEED = 2.0;
+let SHIP_IMPULSE_SPEED = 0.04;
+let GAME_WIDTH = 760;
+let GAME_HEIGHT = 480;
 
 export default class Game {
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.canvas.width = 760;
-    this.canvas.height = 480;
+    this.canvas.width = GAME_WIDTH;
+    this.canvas.height = GAME_HEIGHT;
     this.canvas.className = 'GameCanvas';
     this.context = this.canvas.getContext('2d');
     document.body.appendChild(this.canvas);
@@ -48,7 +52,7 @@ export default class Game {
   };
 
   onKeyUp = (e) => {
-    if (e.keyCode === '38') {
+    if (e.keyCode === 38) {
       // up arrow
       this.upPressed = false;
     }
@@ -77,6 +81,16 @@ export default class Game {
     } else {
       this.ship.setAngularVelocity(0);
     }
+    let shipVelocity = this.ship.getVelocity();
+    if (this.upPressed) {
+      shipVelocity =
+        Vector.addMagnitudeAtAngle(
+          shipVelocity, SHIP_IMPULSE_SPEED, this.ship.getAngle());
+      shipVelocity = Vector.limitMagnitude(shipVelocity, SHIP_MAX_SPEED);
+    } else if (this.downPressed) {
+      shipVelocity = Vector.scale(shipVelocity, 0.99);
+    }
+    this.ship.setVelocity(shipVelocity);
 
     this.ship.update();
   };

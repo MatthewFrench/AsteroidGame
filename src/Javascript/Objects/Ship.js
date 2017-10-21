@@ -1,9 +1,12 @@
 import * as Vector from '../Utility/vector';
 
+let GAME_WIDTH = 760;
+let GAME_HEIGHT = 480;
+
 export default class Ship {
   constructor() {
     this.position = {x: 760 / 2, y: 480 / 2};
-    this.angle = 0;
+    this.angle = -Math.PI/2;
     this.velocity = {x:0, y:0};
     this.angularVelocity = 0;
     this.color = 'black';
@@ -43,6 +46,10 @@ export default class Ship {
     return this.angularVelocity;
   };
 
+  getAngle = () => {
+    return this.angle;
+  };
+
   setColor = (color) => {
     this.color = color;
   };
@@ -50,30 +57,71 @@ export default class Ship {
   update = () => {
     this.position = Vector.add(this.position, this.velocity);
 
-    if (this.position.x < 15 || this.position.x > 760 - 15) {
-      this.velocity.x *= -1;
+    if (this.position.x < 0) {
+      this.position.x += GAME_WIDTH;
     }
-    if (this.position.y < 15 || this.position.y > 360 - 15) {
-      this.velocity.y *= -1;
+    if (this.position.x > GAME_WIDTH) {
+      this.position.x -= GAME_WIDTH;
+    }
+    if (this.position.y < 0) {
+      this.position.y += GAME_HEIGHT;
+    }
+    if (this.position.y > GAME_WIDTH) {
+      this.position.y -= GAME_HEIGHT;
     }
     this.angle += this.angularVelocity;
+    if (this.angle < 0) {
+      this.angle += 2 * Math.PI;
+    }
+    if (this.angle > 2 * Math.PI) {
+      this.angle -= 2 * Math.PI;
+    }
   };
 
   render = (ctx) => {
-    ctx.save();
-    //ctx.translate(-15, -15);
-    ctx.translate(this.position.x, this.position.y);
-    ctx.rotate(this.angle);
-    ctx.beginPath();
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 3;
-    ctx.moveTo(this.polygon[0].x, this.polygon[0].y);
-    for (let point of this.polygon) {
-      ctx.lineTo(point.x, point.y);
+    let positions = [];
+    positions.push(this.position);
+    if (this.position.x < 40 && this.position.y < 40) {
+      positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
+      positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y + GAME_HEIGHT});
+      positions.push({x: this.position.x,y: this.position.y+ GAME_HEIGHT});
+    } else if (this.position.x < 40 && this.position.y > GAME_HEIGHT - 40) {
+      positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
+      positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y - GAME_HEIGHT});
+      positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
+    } else if (this.position.x > GAME_WIDTH - 40 && this.position.y < 40) {
+      positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
+      positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y + GAME_HEIGHT});
+      positions.push({x: this.position.x,y: this.position.y+ GAME_HEIGHT});
+    } else if (this.position.x > GAME_WIDTH - 40 && this.position.y > GAME_HEIGHT - 40) {
+      positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
+      positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y - GAME_HEIGHT});
+      positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
+    } else if (this.position.x < 40) {
+      positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
+    } else if (this.position.x > GAME_WIDTH - 40) {
+      positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
+    } else if (this.position.y < 40) {
+      positions.push({x: this.position.x,y: this.position.y + GAME_HEIGHT});
+    } else if (this.position.y > GAME_HEIGHT - 40) {
+      positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
     }
-    ctx.closePath();
-    //ctx.arc(0,0,15,0,2*Math.PI);
-    ctx.stroke();
-    ctx.restore();
+    for (let position of positions) {
+      ctx.save();
+      //ctx.translate(-15, -15);
+      ctx.translate(position.x, position.y);
+      ctx.rotate(this.angle + Math.PI/2);
+      ctx.beginPath();
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = 3;
+      ctx.moveTo(this.polygon[0].x, this.polygon[0].y);
+      for (let point of this.polygon) {
+        ctx.lineTo(point.x, point.y);
+      }
+      ctx.closePath();
+      //ctx.arc(0,0,15,0,2*Math.PI);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 }

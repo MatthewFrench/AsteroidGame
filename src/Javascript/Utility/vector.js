@@ -9,9 +9,19 @@ module.exports = exports = {
   rotate: rotate,
   dotProduct: dotProduct,
   magnitude: magnitude,
-  normalize: normalize
+  normalize: normalize,
+  getRotation: getRotation,
+  addMagnitude: addMagnitude,
+  create: create,
+  addMagnitudeAtAngle: addMagnitudeAtAngle,
+  limitMagnitude: limitMagnitude,
+  clone: clone
 };
 
+
+function clone(a) {
+  return {x: a.x, y: a.y};
+}
 
 /**
  * @function rotate
@@ -60,6 +70,14 @@ function rotate(a, angle) {
   }
 }
 
+function getRotation(a) {
+  return Math.atan2(a.y, a.x);
+}
+
+function create(length, angle) {
+  return rotate({x: length, y: 0}, angle);
+}
+
 /**
  * @function dotProduct
  * Computes the dot product of two vectors
@@ -79,6 +97,28 @@ function dotProduct(a, b) {
  */
 function magnitude(a) {
   return Math.sqrt(a.x * a.x + a.y * a.y);
+}
+
+function addMagnitude(a, addAmount) {
+  let oldMagnitude = magnitude(a);
+  let rotation = getRotation(a);
+  let newMagnitude = oldMagnitude + addAmount;
+  return create(newMagnitude, rotation);
+}
+
+function addMagnitudeAtAngle(a, addAmount, angle) {
+  let newVector = create(addAmount, angle);
+  return add(a, newVector);
+}
+
+function limitMagnitude(a, maxMagnitude) {
+  let oldMagnitude = magnitude(a);
+  if (oldMagnitude > maxMagnitude) {
+    let rotation = getRotation(a);
+    return create(maxMagnitude, rotation);
+  } else {
+    return a;
+  }
 }
 
 /**
