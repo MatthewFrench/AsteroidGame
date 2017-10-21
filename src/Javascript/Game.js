@@ -1,9 +1,13 @@
 import Ship from './Objects/Ship';
+import Laser from './Objects/Laser';
 import * as Vector from './Utility/vector';
+import Stopwatch from "./Utility/Stopwatch";
 
 let SHIP_ROTATION_SPEED = 0.08;
 let SHIP_MAX_SPEED = 2.0;
 let SHIP_IMPULSE_SPEED = 0.04;
+let LASER_SPEED = 4.0;
+let LASER_SHOOT_DELAY_SECONDS = 0.5;
 let GAME_WIDTH = 760;
 let GAME_HEIGHT = 480;
 
@@ -25,6 +29,9 @@ export default class Game {
     this.leftPressed = false;
     this.rightPressed = false;
     this.spacePressed = false;
+
+    this.laserStopwatch = new Stopwatch();
+    this.lasers = [];
 
     requestAnimationFrame(this.loop);
   }
@@ -93,6 +100,23 @@ export default class Game {
     this.ship.setVelocity(shipVelocity);
 
     this.ship.update();
+
+    for (let laser of this.lasers) {
+      laser.update();
+    }
+
+    //Fire lasers
+    if (this.spacePressed) {
+      if (this.laserStopwatch.getSeconds() >= LASER_SHOOT_DELAY_SECONDS) {
+        this.laserStopwatch.reset();
+        let newLaser = new Laser();
+        newLaser.setPosition(this.ship.position);
+        newLaser.setAngle(this.ship.angle);
+        newLaser.setVelocity(
+          Vector.addMagnitudeAtAngle(this.ship.getVelocity(), LASER_SPEED, this.ship.angle));
+        this.lasers.push(newLaser);
+      }
+    }
   };
 
   render = () => {
@@ -101,6 +125,9 @@ export default class Game {
     //Render Asteroids
 
     //Render Lasers
+    for (let laser of this.lasers) {
+      laser.render(this.context);
+    }
 
     this.ship.render(this.context);
   };

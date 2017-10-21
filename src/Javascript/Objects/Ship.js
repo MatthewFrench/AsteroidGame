@@ -66,7 +66,7 @@ export default class Ship {
     if (this.position.y < 0) {
       this.position.y += GAME_HEIGHT;
     }
-    if (this.position.y > GAME_WIDTH) {
+    if (this.position.y > GAME_HEIGHT) {
       this.position.y -= GAME_HEIGHT;
     }
     this.angle += this.angularVelocity;
@@ -108,6 +108,7 @@ export default class Ship {
     }
     for (let position of positions) {
       ctx.save();
+      ctx.fillStyle = 'white';
       //ctx.translate(-15, -15);
       ctx.translate(position.x, position.y);
       ctx.rotate(this.angle + Math.PI/2);
@@ -121,6 +122,7 @@ export default class Ship {
       ctx.closePath();
       //ctx.arc(0,0,15,0,2*Math.PI);
       ctx.stroke();
+      ctx.fill();
       ctx.restore();
     }
   }
