@@ -1,0 +1,13 @@
+{
+  "name": "Asteroids",
+  "version": "0.0.1",
+  "description": "Asteroid Game",
+  "main": "index.js",
+  "devDependencies": {
+    "react-scripts": "^1.0.14"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  }
+}
