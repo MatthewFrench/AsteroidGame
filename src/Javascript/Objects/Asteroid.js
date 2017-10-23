@@ -2,6 +2,7 @@ import * as Vector from '../Utility/vector';
 
 let GAME_WIDTH = 760;
 let GAME_HEIGHT = 480;
+let ASTEROID_DEFAULT_SIZE = 20;
 
 export default class Asteroid {
   constructor() {
@@ -20,18 +21,26 @@ export default class Asteroid {
     //Choose random angle
     this.angle = Math.random()*Math.PI*2;
     //Choose random velocity
-    this.velocity = Vector.create(Math.random()*2, Math.random()*Math.PI*2);
+    this.velocity = Vector.create(Math.random()*1.5, Math.random()*Math.PI*2);
+
+
+    this.scale = Math.random()*2.5 + 0.5;
+
     //Choose random angular velocity
-    this.angularVelocity = Math.random()*0.01;
+    this.angularVelocity = (Math.random()*0.08 - 0.04) / this.scale;
 
     //Create random polygon that is similar to a circle
-    this.polygon = [
-      Vector.rotate({x: 0, y:-15}, Math.PI/2),
-      Vector.rotate({x: 5, y:-7}, Math.PI/2),
-      Vector.rotate({x: 5, y:15}, Math.PI/2),
-      Vector.rotate({x: -5, y:15}, Math.PI/2),
-      Vector.rotate({x: -5, y:-7}, Math.PI/2)
-    ];
+    this.polygon = [];
+    let polygonSize = ASTEROID_DEFAULT_SIZE;
+    let sizeVariance = 10;
+    let maxCircleStepSize = Math.PI * 2 / (Math.random() * 25 + 6);
+    for (let circleRotation = 0;
+         circleRotation <= Math.PI * 2;
+         circleRotation += Math.random() * maxCircleStepSize + maxCircleStepSize/10) {
+      polygonSize += Math.random() * sizeVariance - sizeVariance/2;
+      let newPoint = Vector.create(polygonSize, circleRotation);
+      this.polygon.push(newPoint);
+    }
   }
 
   getPosition = () => {
@@ -123,11 +132,11 @@ export default class Asteroid {
         }
       }
     }
-    let lineWidth = 2;
-    bounds.left += this.position.x - lineWidth;
-    bounds.right += this.position.x + lineWidth;
-    bounds.top += this.position.y - lineWidth;
-    bounds.bottom += this.position.y + lineWidth;
+    let lineWidth = 2 * this.scale;
+    bounds.left = bounds.left * this.scale + this.position.x - lineWidth;
+    bounds.right = bounds.right * this.scale + this.position.x + lineWidth;
+    bounds.top = bounds.top * this.scale + this.position.y - lineWidth;
+    bounds.bottom = bounds.bottom * this.scale + this.position.y + lineWidth;
 
     return bounds;
   };
@@ -171,6 +180,7 @@ export default class Asteroid {
       ctx.fillStyle = 'white';
       //ctx.translate(-15, -15);
       ctx.translate(position.x, position.y);
+      ctx.scale(this.scale, this.scale);
       ctx.rotate(this.angle);
       ctx.beginPath();
       ctx.strokeStyle = this.color;
