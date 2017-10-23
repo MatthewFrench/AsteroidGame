@@ -2,6 +2,7 @@ import Ship from './Objects/Ship';
 import Laser from './Objects/Laser';
 import * as Vector from './Utility/vector';
 import Stopwatch from "./Utility/Stopwatch";
+import Asteroid from "./Objects/Asteroid";
 
 let SHIP_ROTATION_SPEED = 0.08;
 let SHIP_MAX_SPEED = 2.0;
@@ -32,6 +33,13 @@ export default class Game {
 
     this.laserStopwatch = new Stopwatch();
     this.lasers = [];
+
+    this.asteroids = [];
+    //Create asteroids
+    for (let index = 0; index < 10; index++) {
+      let asteroid = new Asteroid();
+      this.asteroids.push(asteroid);
+    }
 
     requestAnimationFrame(this.loop);
   }
@@ -101,6 +109,10 @@ export default class Game {
 
     this.ship.update();
 
+    for (let asteroid of this.asteroids) {
+      asteroid.update();
+    }
+
     for (let laser of this.lasers) {
       laser.update();
     }
@@ -124,6 +136,9 @@ export default class Game {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     //Render Asteroids
+    for (let asteroid of this.asteroids) {
+      asteroid.render(this.context);
+    }
 
     //Render Lasers
     for (let laser of this.lasers) {

@@ -15,9 +15,28 @@ module.exports = exports = {
   create: create,
   addMagnitudeAtAngle: addMagnitudeAtAngle,
   limitMagnitude: limitMagnitude,
-  clone: clone
+  clone: clone,
+  distanceBetween: distanceBetween,
+  pushVectorOutsideRadius: pushVectorOutsideRadius
 };
 
+/**
+ * Pushes vector away from the repulse vector in radius.
+ * @param vector
+ * @param repulseVector
+ * @param radius
+ */
+function pushVectorOutsideRadius(vector, repulseVector, radius) {
+  if (distanceBetween(vector, repulseVector) >= radius) {
+    return vector;
+  }
+  return {x: repulseVector.x + radius * (repulseVector.x - vector.x) / (Math.sqrt(Math.pow(repulseVector.x - vector.x,2) + Math.pow(repulseVector.y - vector.y,2))),
+    y: repulseVector.y + radius * (repulseVector.y - vector.y) / (Math.sqrt(Math.pow(repulseVector.x - vector.x,2) + Math.pow(repulseVector.y - vector.y,2)))};
+}
+
+function distanceBetween(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
 
 function clone(a) {
   return {x: a.x, y: a.y};

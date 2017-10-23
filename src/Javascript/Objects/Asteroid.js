@@ -3,16 +3,28 @@ import * as Vector from '../Utility/vector';
 let GAME_WIDTH = 760;
 let GAME_HEIGHT = 480;
 
-export default class Ship {
+export default class Asteroid {
   constructor() {
-    this.position = {x: 760 / 2, y: 480 / 2};
-    this.angle = -Math.PI/2;
-    this.velocity = {x:0, y:0};
-    this.angularVelocity = 0;
     this.color = 'black';
     //Made this pointing up which it needs to start by pointing right
     //Angle of 0 is facing right.
     //So I fix by rotating it right
+    //Generate random polygon
+
+    //Choose random position that isn't near the center of the screen
+    let randomPosition = {x: Math.floor(Math.random()*GAME_WIDTH),
+      y: Math.floor(Math.random()*GAME_HEIGHT)};
+    //Push position out of the center if it's in center
+    let centerPosition = {x: GAME_WIDTH/2, y: GAME_HEIGHT/2};
+    this.position = Vector.pushVectorOutsideRadius(randomPosition, centerPosition, 100);
+    //Choose random angle
+    this.angle = Math.random()*Math.PI*2;
+    //Choose random velocity
+    this.velocity = Vector.create(Math.random()*2, Math.random()*Math.PI*2);
+    //Choose random angular velocity
+    this.angularVelocity = Math.random()*0.01;
+
+    //Create random polygon that is similar to a circle
     this.polygon = [
       Vector.rotate({x: 0, y:-15}, Math.PI/2),
       Vector.rotate({x: 5, y:-7}, Math.PI/2),
