@@ -120,6 +120,30 @@ export default class Ship {
     return bounds;
   };
 
+  getWorldPolygons = () => {
+    //This gets all positions of the asteroid
+    let warpPositions = this.getPossibleWarpPositions();
+    //Now get all transformed polygon
+    let transformedPolygon = [];
+    for (let point of this.polygon) {
+      let transformedPoint = Vector.clone(point);
+      transformedPoint = Vector.rotate(point, this.angle);
+      transformedPolygon.push(transformedPoint);
+    }
+    //Now create a transformed polygon for every world position
+    let polygons = [];
+    for (let position of warpPositions) {
+      let worldPolygon = [];
+      for (let point of transformedPolygon) {
+        let worldPoint = Vector.add(point, position);
+        worldPolygon.push(worldPoint);
+      }
+      polygons.push(worldPolygon);
+    }
+
+    return polygons;
+  };
+
   getPossibleWarpPositions = () => {
     let bounds = this.getPolygonBounds();
     let positions = [];

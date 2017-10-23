@@ -6,6 +6,9 @@ let ASTEROID_DEFAULT_SIZE = 20;
 
 export default class Asteroid {
   constructor() {
+    this.polygonBoundsNeedUpdated = true;
+    this.polygonBounds = [];
+
     this.color = 'black';
     //Made this pointing up which it needs to start by pointing right
     //Angle of 0 is facing right.
@@ -100,45 +103,82 @@ export default class Asteroid {
     if (this.angle > 2 * Math.PI) {
       this.angle -= 2 * Math.PI;
     }
+    this.polygonBoundsNeedUpdated = true;
   };
 
-  getPolygonBounds = () => {
-    //Factor in rotation
-    let bounds = {
-      left: null,
-      right: null,
-      top: null,
-      bottom: null
-    };
+  getWorldPolygons = () => {
+    //This gets all positions of the asteroid
+    let warpPositions = this.getPossibleWarpPositions();
+    //Now get all transformed polygon
+    let transformedPolygon = [];
     for (let point of this.polygon) {
-      //Rotate point
-      let rotatedPoint = Vector.rotate(point, this.angle);
-      //Set point
-      if (bounds.left === null) {
-        bounds.left = rotatedPoint.x;
-        bounds.right = rotatedPoint.x;
-        bounds.top = rotatedPoint.y;
-        bounds.bottom = rotatedPoint.y;
-      } else {
-        if (rotatedPoint.x < bounds.left) {
+      let transformedPoint = Vector.clone(point);
+      transformedPoint = Vector.rotate(point, this.angle);
+      transformedPoint = Vector.scale(point, this.scale);
+      transformedPolygon.push(transformedPoint);
+    }
+    //Now create a transformed polygon for every world position
+    let polygons = [];
+    for (let position of warpPositions) {
+      let worldPolygon = [];
+      for (let point of transformedPolygon) {
+        let worldPoint = Vector.add(point, position);
+        worldPolygon.push(worldPoint);
+      }
+      polygons.push(worldPolygon);
+    }
+
+    return polygons;
+  };
+
+  //TODO : Rewrite Bounds to return an array of all bounds
+  //after warp with positions, translation, rotation
+
+  //TODO : Rewrite getWorldPolygons to return an array of
+  //all polygons after warp with positions, translation, rotation
+
+  getPolygonBounds = () => {
+    if (this.polygonBoundsNeedUpdated) {
+      //Factor in rotation
+      let bounds = {
+        left: null,
+        right: null,
+        top: null,
+        bottom: null
+      };
+      for (let point of this.polygon) {
+        //Rotate point
+        let rotatedPoint = Vector.rotate(point, this.angle);
+        //Set point
+        if (bounds.left === null) {
           bounds.left = rotatedPoint.x;
-        } else if (rotatedPoint.x > bounds.right) {
           bounds.right = rotatedPoint.x;
-        }
-        if (rotatedPoint.y < bounds.top) {
           bounds.top = rotatedPoint.y;
-        } else if (rotatedPoint.y > bounds.bottom) {
           bounds.bottom = rotatedPoint.y;
+        } else {
+          if (rotatedPoint.x < bounds.left) {
+            bounds.left = rotatedPoint.x;
+          } else if (rotatedPoint.x > bounds.right) {
+            bounds.right = rotatedPoint.x;
+          }
+          if (rotatedPoint.y < bounds.top) {
+            bounds.top = rotatedPoint.y;
+          } else if (rotatedPoint.y > bounds.bottom) {
+            bounds.bottom = rotatedPoint.y;
+          }
         }
       }
-    }
-    let lineWidth = 2 * this.scale;
-    bounds.left = bounds.left * this.scale + this.position.x - lineWidth;
-    bounds.right = bounds.right * this.scale + this.position.x + lineWidth;
-    bounds.top = bounds.top * this.scale + this.position.y - lineWidth;
-    bounds.bottom = bounds.bottom * this.scale + this.position.y + lineWidth;
+      let lineWidth = 2 * this.scale;
+      bounds.left = bounds.left * this.scale + this.position.x - lineWidth;
+      bounds.right = bounds.right * this.scale + this.position.x + lineWidth;
+      bounds.top = bounds.top * this.scale + this.position.y - lineWidth;
+      bounds.bottom = bounds.bottom * this.scale + this.position.y + lineWidth;
 
-    return bounds;
+      this.polygonBounds = bounds;
+      this.polygonBoundsNeedUpdated = false;
+    }
+
+    return this.polygonBounds;
   };
 
   getPossibleWarpPositions = () => {
@@ -196,9 +236,8 @@ export default class Asteroid {
       ctx.fill();
       ctx.restore();
       //Draw hit bounds
-      //let bounds = this.getPolygonBounds();
-      //ctx.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
-      //ctx.fillText(this.angle.toFixed(2), 5, 15);
+      let bounds = this.getPolygonBounds();
+      ctx.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
     }
   }
 }
