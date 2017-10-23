@@ -110,7 +110,8 @@ export default class Game {
       if (this.laserStopwatch.getSeconds() >= LASER_SHOOT_DELAY_SECONDS) {
         this.laserStopwatch.reset();
         let newLaser = new Laser();
-        newLaser.setPosition(this.ship.position);
+        //Put the laser at the front of the ship
+        newLaser.setPosition(Vector.add(this.ship.position, Vector.create(20, this.ship.angle)));
         newLaser.setAngle(this.ship.angle);
         newLaser.setVelocity(
           Vector.addMagnitudeAtAngle(this.ship.getVelocity(), LASER_SPEED, this.ship.angle));

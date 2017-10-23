@@ -10,11 +10,14 @@ export default class Ship {
     this.velocity = {x:0, y:0};
     this.angularVelocity = 0;
     this.color = 'black';
+    //Made this pointing up which it needs to start by pointing right
+    //Angle of 0 is facing right.
+    //So I fix by rotating it right
     this.polygon = [
-      {x: -1, y:-10},
-      {x: 1, y:-10},
-      {x: 1, y:10},
-      {x: -1, y:10}
+      Vector.rotate({x: -1, y:-10}, Math.PI/2),
+      Vector.rotate({x: 1, y:-10}, Math.PI/2),
+      Vector.rotate({x: 1, y:10}, Math.PI/2),
+      Vector.rotate({x: -1, y:10}, Math.PI/2)
     ];
     this.needsRemoved = false;
   }
@@ -95,7 +98,7 @@ export default class Ship {
       ctx.save();
       //ctx.translate(-15, -15);
       ctx.translate(this.position.x, this.position.y);
-      ctx.rotate(this.angle + Math.PI/2);
+      ctx.rotate(this.angle);
       ctx.beginPath();
       ctx.strokeStyle = this.color;
       ctx.lineWidth = 1;

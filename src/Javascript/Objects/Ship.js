@@ -10,12 +10,15 @@ export default class Ship {
     this.velocity = {x:0, y:0};
     this.angularVelocity = 0;
     this.color = 'black';
+    //Made this pointing up which it needs to start by pointing right
+    //Angle of 0 is facing right.
+    //So I fix by rotating it right
     this.polygon = [
-      {x: 0, y:-15},
-      {x: 5, y:-7},
-      {x: 5, y:15},
-      {x: -5, y:15},
-      {x: -5, y:-7}
+      Vector.rotate({x: 0, y:-15}, Math.PI/2),
+      Vector.rotate({x: 5, y:-7}, Math.PI/2),
+      Vector.rotate({x: 5, y:15}, Math.PI/2),
+      Vector.rotate({x: -5, y:15}, Math.PI/2),
+      Vector.rotate({x: -5, y:-7}, Math.PI/2)
     ];
   }
 
@@ -78,40 +81,85 @@ export default class Ship {
     }
   };
 
-  render = (ctx) => {
+  getPolygonBounds = () => {
+    //Factor in rotation
+    let bounds = {
+      left: null,
+      right: null,
+      top: null,
+      bottom: null
+    };
+    for (let point of this.polygon) {
+      //Rotate point
+      let rotatedPoint = Vector.rotate(point, this.angle);
+      //Set point
+      if (bounds.left === null) {
+        bounds.left = rotatedPoint.x;
+        bounds.right = rotatedPoint.x;
+        bounds.top = rotatedPoint.y;
+        bounds.bottom = rotatedPoint.y;
+      } else {
+        if (rotatedPoint.x < bounds.left) {
+          bounds.left = rotatedPoint.x;
+        } else if (rotatedPoint.x > bounds.right) {
+          bounds.right = rotatedPoint.x;
+        }
+        if (rotatedPoint.y < bounds.top) {
+          bounds.top = rotatedPoint.y;
+        } else if (rotatedPoint.y > bounds.bottom) {
+          bounds.bottom = rotatedPoint.y;
+        }
+      }
+    }
+    let lineWidth = 2;
+    bounds.left += this.position.x - lineWidth;
+    bounds.right += this.position.x + lineWidth;
+    bounds.top += this.position.y - lineWidth;
+    bounds.bottom += this.position.y + lineWidth;
+
+    return bounds;
+  };
+
+  getPossibleWarpPositions = () => {
+    let bounds = this.getPolygonBounds();
     let positions = [];
     positions.push(this.position);
-    if (this.position.x < 40 && this.position.y < 40) {
+    if (bounds.left < 0 && bounds.top < 0) {
       positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
       positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y + GAME_HEIGHT});
       positions.push({x: this.position.x,y: this.position.y+ GAME_HEIGHT});
-    } else if (this.position.x < 40 && this.position.y > GAME_HEIGHT - 40) {
+    } else if (bounds.left < 0 && bounds.bottom > GAME_HEIGHT) {
       positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
       positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y - GAME_HEIGHT});
       positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
-    } else if (this.position.x > GAME_WIDTH - 40 && this.position.y < 40) {
+    } else if (bounds.right > GAME_WIDTH && bounds.top < 0) {
       positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
       positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y + GAME_HEIGHT});
       positions.push({x: this.position.x,y: this.position.y+ GAME_HEIGHT});
-    } else if (this.position.x > GAME_WIDTH - 40 && this.position.y > GAME_HEIGHT - 40) {
+    } else if (bounds.right > GAME_WIDTH && bounds.bottom > GAME_HEIGHT) {
       positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
       positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y - GAME_HEIGHT});
       positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
-    } else if (this.position.x < 40) {
+    } else if (bounds.left < 0) {
       positions.push({x: this.position.x + GAME_WIDTH,y: this.position.y});
-    } else if (this.position.x > GAME_WIDTH - 40) {
+    } else if (bounds.right > GAME_WIDTH) {
       positions.push({x: this.position.x - GAME_WIDTH,y: this.position.y});
-    } else if (this.position.y < 40) {
+    } else if (bounds.top < 0) {
       positions.push({x: this.position.x,y: this.position.y + GAME_HEIGHT});
-    } else if (this.position.y > GAME_HEIGHT - 40) {
+    } else if (bounds.bottom > GAME_HEIGHT) {
       positions.push({x: this.position.x,y: this.position.y - GAME_HEIGHT});
     }
+    return positions;
+  };
+
+  render = (ctx) => {
+    let positions = this.getPossibleWarpPositions();
     for (let position of positions) {
       ctx.save();
       ctx.fillStyle = 'white';
       //ctx.translate(-15, -15);
       ctx.translate(position.x, position.y);
-      ctx.rotate(this.angle + Math.PI/2);
+      ctx.rotate(this.angle);
       ctx.beginPath();
       ctx.strokeStyle = this.color;
       ctx.lineWidth = 3;
@@ -124,6 +172,9 @@ export default class Ship {
       ctx.stroke();
       ctx.fill();
       ctx.restore();
+      //let bounds = this.getPolygonBounds();
+      //ctx.strokeRect(bounds.left, bounds.top, bounds.right - bounds.left, bounds.bottom - bounds.top);
+      //ctx.fillText(this.angle.toFixed(2), 5, 15);
     }
   }
 }
