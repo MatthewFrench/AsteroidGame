@@ -37,7 +37,7 @@ export default class Game {
 
     this.asteroids = [];
     //Create asteroids
-    for (let index = 0; index < 2; index++) {
+    for (let index = 0; index < 10; index++) {
       let asteroid = new Asteroid();
       this.asteroids.push(asteroid);
     }
@@ -93,16 +93,18 @@ export default class Game {
     for (let asteroidIndex = 0; asteroidIndex < this.asteroids.length; asteroidIndex++) {
       let collision = false;
       let asteroid = this.asteroids[asteroidIndex];
-      let allPolygons = asteroid.getWorldPolygons();
+      let allPolygons = asteroid.getWarpPolygons();
+      let allBounds = asteroid.getWarpBounds();
 
       for (let asteroidIndex2 = 0; asteroidIndex2 < this.asteroids.length; asteroidIndex2++) {
         let asteroid2 = this.asteroids[asteroidIndex2];
         if (asteroidIndex === asteroidIndex2) {
           continue;
         }
-        for (let bounds1 of allPolygons) {
-          let allPolygons2 = asteroid2.getWorldPolygons();
-          for (let bounds2 of allPolygons2) {
+        for (let bounds1 of allBounds) {
+          let allPolygons2 = asteroid2.getWarpPolygons();
+          let allBounds2 = asteroid2.getWarpBounds();
+          for (let bounds2 of allBounds2) {
             if (Collision.boundsIntersect(bounds1, bounds2)) {
               collision = true;
               this.context.save();
@@ -111,13 +113,13 @@ export default class Game {
               this.context.beginPath();
               this.context.strokeStyle = 'blue';
               this.context.lineWidth = 3;
-              this.context.moveTo(bounds1[0].x, bounds1[0].y);
-              for (let point of bounds1) {
+              this.context.moveTo(allPolygons[0].x, allPolygons[0].y);
+              for (let point of allPolygons) {
                 this.context.lineTo(point.x, point.y);
               }
               this.context.closePath();
-              this.context.moveTo(bounds2[0].x, bounds2[0].y);
-              for (let point of bounds2) {
+              this.context.moveTo(allPolygons2[0].x, allPolygons2[0].y);
+              for (let point of allPolygons2) {
                 this.context.lineTo(point.x, point.y);
               }
               this.context.closePath();

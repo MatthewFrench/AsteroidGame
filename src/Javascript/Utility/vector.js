@@ -17,8 +17,22 @@ module.exports = exports = {
   limitMagnitude: limitMagnitude,
   clone: clone,
   distanceBetween: distanceBetween,
-  pushVectorOutsideRadius: pushVectorOutsideRadius
+  pushVectorOutsideRadius: pushVectorOutsideRadius,
+  addVectorToBounds: addVectorToBounds
 };
+
+/**
+ * Adds a vector to bounds.
+ * @param vector
+ * @param bounds
+ * @returns {{left: *, right: *, top: *, bottom: *}}
+ */
+function addVectorToBounds(vector, bounds) {
+  return {left: bounds.left + vector.x,
+          right: bounds.right + vector.x,
+          top: bounds.top + vector.y,
+          bottom: bounds.bottom + vector.y};
+}
 
 /**
  * Pushes vector away from the repulse vector in radius.
