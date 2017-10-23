@@ -161,7 +161,7 @@ export default class Asteroid {
     let transformedPolygon = [];
     for (let point of this.polygon) {
       let transformedPoint = Vector.rotate(point, this.angle);
-      transformedPoint = Vector.scale(point, this.scale);
+      transformedPoint = Vector.scale(transformedPoint, this.scale);
       transformedPolygon.push(transformedPoint);
     }
     return transformedPolygon;
@@ -185,7 +185,7 @@ export default class Asteroid {
    * @returns {Array}
    */
   getWarpPositions = () => {
-    let bounds = this.getBounds();
+    let bounds = this.getWorldBounds();
     let positions = [];
     positions.push(this.position);
     if (bounds.left < 0 && bounds.top < 0) {
@@ -268,10 +268,12 @@ export default class Asteroid {
     }
     ctx.stroke();
     ctx.fill();
+    /*
     let bounds = this.getWarpBounds();
     for (let bound of bounds) {
       ctx.strokeRect(bound.left, bound.top, bound.right - bound.left, bound.bottom - bound.top);
     }
+    */
     ctx.restore();
   }
 }
