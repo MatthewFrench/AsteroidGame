@@ -34,7 +34,7 @@ export default class Asteroid {
     //Create random polygon that is similar to a circle
     this.polygon = [];
     let polygonSize = ASTEROID_DEFAULT_SIZE;
-    let sizeVariance = 10;
+    let sizeVariance = 10 / (3.0 / this.scale);
     let maxCircleStepSize = Math.PI * 2 / (Math.random() * 25 + 6);
     for (let circleRotation = 0;
          circleRotation <= Math.PI * 2;
@@ -62,6 +62,10 @@ export default class Asteroid {
       x: this.velocity.x,
       y: this.velocity.y
     };
+  };
+
+  getScale = () => {
+    return this.scale;
   };
 
   setAngularVelocity = (angularVelocity) => {
@@ -217,39 +221,27 @@ export default class Asteroid {
   };
 
   /**
-   * Returns the bounds at every place the asteroid is at.
+   * Returns the bounds and polygons at every place the asteroid is at.
+   * [{bounds: {left,right,top,bottom}, polygon:[points]}]
    */
-  getWarpBounds = () => {
+  getWarpBoundsAndPolygons = () => {
     let positions = this.getWarpPositions();
     let bounds = this.getBounds();
+    let polygon = this.getPolygon();
 
-    let multipleWorldBounds = [];
+    let multipleWorldBoundsAndPolygons = [];
 
     for (let position of positions) {
-      multipleWorldBounds.push(Vector.addVectorToBounds(position, bounds));
-    }
-
-    return multipleWorldBounds;
-  };
-
-  /**
-   * Returns all transformed polygons at all warp positions.
-   * @returns {Array}
-   */
-  getWarpPolygons = () => {
-    let polygon = this.getPolygon();
-    let warpPositions = this.getWarpPositions();
-    //Now create a transformed polygon for every world position
-    let polygons = [];
-    for (let position of warpPositions) {
+      let worldBounds = Vector.addVectorToBounds(position, bounds);
       let worldPolygon = [];
       for (let point of polygon) {
         let worldPoint = Vector.add(point, position);
         worldPolygon.push(worldPoint);
       }
-      polygons.push(worldPolygon);
+      multipleWorldBoundsAndPolygons.push({bounds: worldBounds, polygon: worldPolygon});
     }
-    return polygons;
+
+    return multipleWorldBoundsAndPolygons;
   };
 
   render = (ctx) => {
@@ -257,9 +249,10 @@ export default class Asteroid {
     ctx.fillStyle = 'white';
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 3;
-    let polygons = this.getWarpPolygons();
+    let boundsAndPolygons = this.getWarpBoundsAndPolygons();
     ctx.beginPath();
-    for (let polygon of polygons) {
+    for (let boundAndPolygon of boundsAndPolygons) {
+      let polygon = boundAndPolygon.polygon;
       ctx.moveTo(polygon[0].x, polygon[0].y);
       for (let point of polygon) {
         ctx.lineTo(point.x, point.y);

@@ -36,6 +36,7 @@ export default class Game {
     this.lasers = [];
 
     this.asteroids = [];
+    this.existingAsteroidCollision = [];
     //Create asteroids
     for (let index = 0; index < 10; index++) {
       let asteroid = new Asteroid();
@@ -93,44 +94,95 @@ export default class Game {
     for (let asteroidIndex = 0; asteroidIndex < this.asteroids.length; asteroidIndex++) {
       let collision = false;
       let asteroid = this.asteroids[asteroidIndex];
-      let allPolygons = asteroid.getWarpPolygons();
-      let allBounds = asteroid.getWarpBounds();
+      let allBoundsAndPolygons = asteroid.getWarpBoundsAndPolygons();
 
-      for (let asteroidIndex2 = 0; asteroidIndex2 < this.asteroids.length; asteroidIndex2++) {
+      for (let asteroidIndex2 = asteroidIndex + 1; asteroidIndex2 < this.asteroids.length; asteroidIndex2++) {
         let asteroid2 = this.asteroids[asteroidIndex2];
-        if (asteroidIndex === asteroidIndex2) {
-          continue;
-        }
-        for (let bounds1 of allBounds) {
-          let allPolygons2 = asteroid2.getWarpPolygons();
-          let allBounds2 = asteroid2.getWarpBounds();
-          for (let bounds2 of allBounds2) {
-            if (Collision.boundsIntersect(bounds1, bounds2)) {
-              collision = true;
-              this.context.save();
-              this.context.fillStyle = 'white';
-              //ctx.translate(-15, -15);
-              this.context.beginPath();
-              this.context.strokeStyle = 'blue';
-              this.context.lineWidth = 3;
-              this.context.moveTo(allPolygons[0].x, allPolygons[0].y);
-              for (let point of allPolygons) {
-                this.context.lineTo(point.x, point.y);
+        let collisionPoints = [];
+        /*
+        Collision Point contains:
+            point - Intersection point
+            asteroid1Center - Center of the asteroid
+            asteroid2Center - Center of the second asteroid
+         */
+        for (let boundAndPolygon1 of allBoundsAndPolygons) {
+          let allBoundsAndPolygons2 = asteroid2.getWarpBoundsAndPolygons();
+          for (let boundAndPolygon2 of allBoundsAndPolygons2) {
+            if (Collision.boundsIntersect(boundAndPolygon1.bounds, boundAndPolygon2.bounds)) {
+              let polygon1 = boundAndPolygon1.polygon;
+              let polygon2 = boundAndPolygon2.polygon;
+
+              for (let vector1Index = 0; vector1Index < polygon1.length; vector1Index++) {
+                let vector1Start = polygon1[vector1Index];
+                let vector1End;
+                if (vector1Index === polygon1.length - 1) {
+                  vector1End = polygon1[0];
+                } else {
+                  vector1End = polygon1[vector1Index + 1];
+                }
+                for (let vector2Index = 0; vector2Index < polygon2.length; vector2Index++) {
+                  let vector2Start = polygon2[vector2Index];
+                  let vector2End;
+                  if (vector2Index === polygon2.length - 1) {
+                    vector2End = polygon2[0];
+                  } else {
+                    vector2End = polygon2[vector2Index + 1];
+                  }
+                  let collisionPoint = Collision.getLineIntersection(vector1Start, vector1End, vector2Start, vector2End);
+                  if (collisionPoint !== null) {
+                    collisionPoints.push({
+                      point: collisionPoint,
+                      asteroid1Center: Vector.getBoundCenter(boundAndPolygon1.bounds),
+                      asteroid2Center: Vector.getBoundCenter(boundAndPolygon2.bounds)
+                    });
+                  }
+                }
               }
-              this.context.closePath();
-              this.context.moveTo(allPolygons2[0].x, allPolygons2[0].y);
-              for (let point of allPolygons2) {
-                this.context.lineTo(point.x, point.y);
-              }
-              this.context.closePath();
-              //Draw circle
-              //ctx.arc(0,0,15,0,2*Math.PI);
-              this.context.stroke();
-              this.context.fill();
-              this.context.restore();
             }
           }
         }
+        //Compute the collision
+        let collisionAlreadyExists = this.existingAsteroidCollision.find(
+          (a)=>{return ((a[0] === asteroid && a[1] === asteroid2) || (a[0] === asteroid2 && a[1] === asteroid)) }) !== undefined;
+        if (collisionPoints.length > 0 && !collisionAlreadyExists) {
+          collision = true;
+
+          let normal1 = {x: 0, y: 0};
+          let normal2 = {x: 0, y: 0};
+
+          for (let collision of collisionPoints) {
+            let point = collision.point;
+            let asteroid1Center = collision.asteroid1Center;
+            let asteroid2Center = collision.asteroid2Center;
+
+            let collisionNormal1 = Vector.normalize(Vector.subtract(point, asteroid1Center));
+            let collisionNormal2 = Vector.normalize(Vector.subtract(asteroid2Center, point));
+
+            normal1 = Vector.add(collisionNormal1, normal1);
+            normal2 = Vector.add(collisionNormal2, normal2);
+          }
+          normal1 = Vector.normalize(normal1);
+          normal2 = Vector.normalize(normal2);
+          let asteroid1Mass = asteroid.getScale();
+          let asteroid2Mass = asteroid2.getScale();
+
+          let newVelX1 = normal1.x * (asteroid.velocity.x * (asteroid1Mass - asteroid2Mass) + (2 * asteroid2Mass * asteroid2.velocity.x)) / (asteroid1Mass + asteroid2Mass);
+          let newVelY1 = normal1.y * (asteroid.velocity.y * (asteroid1Mass - asteroid2Mass) + (2 * asteroid2Mass * asteroid2.velocity.y)) / (asteroid1Mass + asteroid2Mass);
+          let newVelX2 = normal2.x * (asteroid2.velocity.x * (asteroid2Mass - asteroid1Mass) + (2 * asteroid1Mass * asteroid.velocity.x)) / (asteroid1Mass + asteroid2Mass);
+          let newVelY2 = normal2.y * (asteroid2.velocity.y * (asteroid2Mass - asteroid1Mass) + (2 * asteroid1Mass * asteroid.velocity.y)) / (asteroid1Mass + asteroid2Mass);
+
+          asteroid.velocity.x *= -1;
+          asteroid.velocity.y *= -1;
+          asteroid2.velocity.x *= -1;
+          asteroid2.velocity.y *= -1;
+          this.existingAsteroidCollision.push([asteroid, asteroid2]);
+          //asteroid.velocity = normal1;
+          //asteroid2.velocity = normal2;
+        } else if (collisionPoints.length === 0 && collisionAlreadyExists) {
+          //Remove existing collision
+          this.existingAsteroidCollision = this.existingAsteroidCollision.filter((a)=>{return !((a[0] === asteroid && a[1] === asteroid2) || (a[0] === asteroid2 && a[1] === asteroid)) });
+        }
+
       }
 
       if (collision) {

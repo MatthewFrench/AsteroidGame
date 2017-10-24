@@ -18,7 +18,8 @@ module.exports = exports = {
   clone: clone,
   distanceBetween: distanceBetween,
   pushVectorOutsideRadius: pushVectorOutsideRadius,
-  addVectorToBounds: addVectorToBounds
+  addVectorToBounds: addVectorToBounds,
+  getBoundCenter: getBoundCenter
 };
 
 /**
@@ -32,6 +33,11 @@ function addVectorToBounds(vector, bounds) {
           right: bounds.right + vector.x,
           top: bounds.top + vector.y,
           bottom: bounds.bottom + vector.y};
+}
+
+function getBoundCenter(bounds) {
+  return {x: (bounds.left - bounds.right) / 2 + bounds.right,
+          y: (bounds.top - bounds.bottom) / 2 + bounds.bottom};
 }
 
 /**
