@@ -347,6 +347,9 @@ export default class Game {
           this.existingAsteroidCollision.push([asteroid, asteroid2]);
           //asteroid.velocity = normal1;
           //asteroid2.velocity = normal2;
+
+          let audio = new Audio('/AsteroidHit.wav');
+          audio.play();
         } else if (collisionPoints.length === 0 && collisionAlreadyExists) {
           //Remove existing collision
           this.existingAsteroidCollision = this.existingAsteroidCollision.filter((a)=>{return !((a[0] === asteroid && a[1] === asteroid2) || (a[0] === asteroid2 && a[1] === asteroid)) });
@@ -398,6 +401,9 @@ export default class Game {
         newLaser.setVelocity(
           Vector.addMagnitudeAtAngle(this.ship.getVelocity(), LASER_SPEED, this.ship.angle));
         this.lasers.push(newLaser);
+
+        let audio = new Audio('/LaserShot.wav');
+        audio.play();
       }
     }
 
