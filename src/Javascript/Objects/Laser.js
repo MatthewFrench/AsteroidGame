@@ -10,6 +10,7 @@ export default class Ship {
     this.velocity = {x:0, y:0};
     this.angularVelocity = 0;
     this.color = 'black';
+    this.scale = 1.0;
     //Made this pointing up which it needs to start by pointing right
     //Angle of 0 is facing right.
     //So I fix by rotating it right
@@ -92,6 +93,83 @@ export default class Ship {
     if (this.angle > 2 * Math.PI) {
       this.angle -= 2 * Math.PI;
     }
+  };
+
+
+  /**
+   * Returns the bounds of the original polygon.
+   * @returns {Array}
+   */
+  getBounds = () => {
+    //Factor in rotation
+    let bounds = {
+      left: null,
+      right: null,
+      top: null,
+      bottom: null
+    };
+    for (let point of this.polygon) {
+      //Rotate point
+      let rotatedPoint = Vector.rotate(point, this.angle);
+      //Set point
+      if (bounds.left === null) {
+        bounds.left = rotatedPoint.x;
+        bounds.right = rotatedPoint.x;
+        bounds.top = rotatedPoint.y;
+        bounds.bottom = rotatedPoint.y;
+      } else {
+        if (rotatedPoint.x < bounds.left) {
+          bounds.left = rotatedPoint.x;
+        } else if (rotatedPoint.x > bounds.right) {
+          bounds.right = rotatedPoint.x;
+        }
+        if (rotatedPoint.y < bounds.top) {
+          bounds.top = rotatedPoint.y;
+        } else if (rotatedPoint.y > bounds.bottom) {
+          bounds.bottom = rotatedPoint.y;
+        }
+      }
+    }
+    let lineWidth = 2;
+    bounds.left = (bounds.left - lineWidth) * this.scale;
+    bounds.right = (bounds.right + lineWidth) * this.scale;
+    bounds.top = (bounds.top - lineWidth) * this.scale;
+    bounds.bottom = (bounds.bottom + lineWidth) * this.scale;
+    return bounds;
+  };
+
+  /**
+   * Returns the bounds at the world position.
+   */
+  getWorldBounds = () => {
+    return Vector.addVectorToBounds(this.position, this.getBounds());
+  };
+
+  /**
+   * Returns the polygon rotated and scaled.
+   * @returns {Array}
+   */
+  getPolygon = () => {
+    let transformedPolygon = [];
+    for (let point of this.polygon) {
+      let transformedPoint = Vector.rotate(point, this.angle);
+      transformedPoint = Vector.scale(transformedPoint, this.scale);
+      transformedPolygon.push(transformedPoint);
+    }
+    return transformedPolygon;
+  };
+
+  /**
+   * Returns the polygon in world position.
+   * @returns {Array}
+   */
+  getWorldPolygon = () => {
+    let polygon = this.getPolygon();
+    let transformedPolygon = [];
+    for (let point of polygon) {
+      transformedPolygon.push(Vector.add(point, this.position));
+    }
+    return transformedPolygon;
   };
 
   render = (ctx) => {
