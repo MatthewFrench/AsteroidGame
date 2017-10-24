@@ -3,7 +3,7 @@ import * as Vector from '../Utility/vector';
 let GAME_WIDTH = 760;
 let GAME_HEIGHT = 480;
 
-export default class Ship {
+export default class Laser {
   constructor() {
     this.position = {x: 760 / 2, y: 480 / 2};
     this.angle = -Math.PI/2;
