@@ -146,7 +146,7 @@ export default class Game {
     }
     if (shipIntersectingAsteroid && this.playerInvulnerabilityTimer === 0) {
 
-      let audio = new Audio('/ShipDestroyed.wav');
+      let audio = new Audio('./ShipDestroyed.wav');
       audio.play();
 
       this.lives--;
@@ -331,7 +331,7 @@ export default class Game {
           //asteroid.velocity = normal1;
           //asteroid2.velocity = normal2;
 
-          let audio = new Audio('/AsteroidHit.wav');
+          let audio = new Audio('./AsteroidHit.wav');
           audio.play();
         } else if (collisionPoints.length === 0 && collisionAlreadyExists) {
           //Remove existing collision
@@ -387,7 +387,7 @@ export default class Game {
           Vector.addMagnitudeAtAngle(this.ship.getVelocity(), LASER_SPEED, this.ship.angle));
         this.lasers.push(newLaser);
 
-        let audio = new Audio('/LaserShot.wav');
+        let audio = new Audio('./LaserShot.wav');
         audio.play();
       }
     }
