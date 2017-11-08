@@ -22,8 +22,6 @@ export default class Game {
     this.context = this.canvas.getContext('2d');
     document.body.appendChild(this.canvas);
 
-    this.ship = new Ship();
-
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     this.downPressed = false;
@@ -31,6 +29,14 @@ export default class Game {
     this.leftPressed = false;
     this.rightPressed = false;
     this.spacePressed = false;
+
+    this.resetGame();
+
+    requestAnimationFrame(this.loop);
+  }
+
+  resetGame = () => {
+    this.ship = new Ship();
 
     this.laserStopwatch = new Stopwatch();
     this.lasers = [];
@@ -47,8 +53,8 @@ export default class Game {
     this.lives = 3;
     this.level = 1;
 
-    requestAnimationFrame(this.loop);
-  }
+    this.playerInvulnerabilityTimer = 0;
+  };
 
   onKeyDown = (e) => {
     if (e.keyCode === 38) {
@@ -94,19 +100,22 @@ export default class Game {
     }
   };
 
-  /*
   runShipAsteroidCollision = () => {
-      let shipBounds = ship.getWorldBounds();
-      let laserPolygon = laser.getWorldPolygon();
+    let shipIntersectingAsteroid = false;
 
-      let destroyLaser = false;
-      asteroidLoop:
+    let allShipBoundsAndPolygons = this.ship.getWarpBoundsAndPolygons();
+
+    collisionLoop:
+    for (let shipBoundAndPolygon of allShipBoundsAndPolygons) {
+      let shipBound = shipBoundAndPolygon.bounds;
+      let shipPolygon = shipBoundAndPolygon.polygon;
+
         for (let asteroidIndex = 0; asteroidIndex < this.asteroids.length; asteroidIndex++) {
           let asteroid = this.asteroids[asteroidIndex];
           let allBoundsAndPolygons = asteroid.getWarpBoundsAndPolygons();
 
           for (let boundAndPolygon1 of allBoundsAndPolygons) {
-            if (Collision.boundsIntersect(boundAndPolygon1.bounds, laserBounds)) {
+            if (Collision.boundsIntersect(boundAndPolygon1.bounds, shipBound)) {
               let polygon1 = boundAndPolygon1.polygon;
               for (let vector1Index = 0; vector1Index < polygon1.length; vector1Index++) {
                 let vector1Start = polygon1[vector1Index];
@@ -116,52 +125,43 @@ export default class Game {
                 } else {
                   vector1End = polygon1[vector1Index + 1];
                 }
-                for (let vector2Index = 0; vector2Index < laserPolygon.length; vector2Index++) {
-                  let vector2Start = laserPolygon[vector2Index];
+                for (let vector2Index = 0; vector2Index < shipPolygon.length; vector2Index++) {
+                  let vector2Start = shipPolygon[vector2Index];
                   let vector2End;
-                  if (vector2Index === laserPolygon.length - 1) {
-                    vector2End = laserPolygon[0];
+                  if (vector2Index === shipPolygon.length - 1) {
+                    vector2End = shipPolygon[0];
                   } else {
-                    vector2End = laserPolygon[vector2Index + 1];
+                    vector2End = shipPolygon[vector2Index + 1];
                   }
                   let collisionPoint = Collision.getLineIntersection(vector1Start, vector1End, vector2Start, vector2End);
                   if (collisionPoint !== null) {
-                    destroyLaser = true;
-                    //Destroy asteroid
-                    this.asteroids.splice(asteroidIndex, 1);
-                    //Remove recorded asteroid collisions
-                    this.existingAsteroidCollision =
-                      this.existingAsteroidCollision.filter(function(a){
-                        return a[0] !== asteroid && a[1] !== asteroid;
-                      });
-                    //Create 2 new asteroids
-                    if (asteroid.scale > 1.0) {
-                      let a1 = new Asteroid();
-                      a1.scale = asteroid.scale/2;
-                      a1.position = Vector.clone(asteroid.position);
-                      this.asteroids.push(a1);
-                      let a2 = new Asteroid();
-                      a2.scale = asteroid.scale/2;
-                      a2.position = Vector.clone(asteroid.position);
-                      this.asteroids.push(a2);
-                    }
-                    this.score++;
-                    break asteroidLoop;
+                    shipIntersectingAsteroid = true;
+                    break collisionLoop;
                   }
                 }
               }
             }
           }
         }
-      if (laser.position.x < -50 || laser.position.x > GAME_WIDTH + 50 ||
-        laser.position.y < -50 || laser.position.y > GAME_HEIGHT + 50) {
-        destroyLaser = true;
+    }
+    if (shipIntersectingAsteroid && this.playerInvulnerabilityTimer === 0) {
+
+      let audio = new Audio('/ShipDestroyed.wav');
+      audio.play();
+
+      this.lives--;
+
+      if (this.lives === 0) {
+        this.lives = 3;
+        setTimeout(()=>{this.resetGame();}, 0);
+      } else {
+        this.playerInvulnerabilityTimer = 60 * 3;
       }
-      if (destroyLaser) {
-        this.lasers.splice(laserIndex, 1);
-        laserIndex--;
-      }
-  };*/
+    }
+    if (this.playerInvulnerabilityTimer > 0) {
+      this.playerInvulnerabilityTimer--;
+    }
+  };
 
   runLaserAsteroidCollision = () => {
     for (let laserIndex = 0; laserIndex < this.lasers.length; laserIndex++) {
@@ -294,10 +294,13 @@ export default class Game {
           let normal1 = {x: 0, y: 0};
           let normal2 = {x: 0, y: 0};
 
+          let asteroid1Center = 0;
+          let asteroid2Center = 0;
+
           for (let collision of collisionPoints) {
             let point = collision.point;
-            let asteroid1Center = collision.asteroid1Center;
-            let asteroid2Center = collision.asteroid2Center;
+            asteroid1Center = collision.asteroid1Center;
+            asteroid2Center = collision.asteroid2Center;
 
             let collisionNormal1 = Vector.normalize(Vector.subtract(point, asteroid1Center));
             let collisionNormal2 = Vector.normalize(Vector.subtract(asteroid2Center, point));
@@ -319,6 +322,11 @@ export default class Game {
           asteroid.velocity.y *= -1;
           asteroid2.velocity.x *= -1;
           asteroid2.velocity.y *= -1;
+
+          let angle = Math.atan2(asteroid2Center.y - asteroid1Center.y, asteroid2Center.x - asteroid1Center.x) - Math.PI/2;
+
+          asteroid.velocity = Vector.create(Vector.magnitude(asteroid.velocity), angle - Math.PI/2);
+          asteroid2.velocity = Vector.create(Vector.magnitude(asteroid2.velocity), angle + Math.PI/2);
           this.existingAsteroidCollision.push([asteroid, asteroid2]);
           //asteroid.velocity = normal1;
           //asteroid2.velocity = normal2;
@@ -365,6 +373,8 @@ export default class Game {
 
     this.runLaserAsteroidCollision();
 
+    this.runShipAsteroidCollision();
+
     //Fire lasers
     if (this.spacePressed) {
       if (this.laserStopwatch.getSeconds() >= LASER_SHOOT_DELAY_SECONDS) {
@@ -408,6 +418,11 @@ export default class Game {
       laser.render(this.context);
     }
 
+    if (this.playerInvulnerabilityTimer > 0) {
+      this.ship.setColor("blue");
+    } else {
+      this.ship.setColor("black");
+    }
     this.ship.render(this.context);
 
     this.context.font = '15px Helvetica';

@@ -1,0 +1,1 @@
+{"version":3,"sources":["CSS/Game.css"],"names":[],"mappings":"AAAA,KACI,iBAAmB,CAEvB,YACI,qBAAwB","file":"static/css/main.d089ec3f.css","sourcesContent":["body {\n    text-align: center;\n}\n.GameCanvas {\n    border: solid 1px black;\n}\n\n\n// WEBPACK FOOTER //\n// ./src/CSS/Game.css"],"sourceRoot":""}
