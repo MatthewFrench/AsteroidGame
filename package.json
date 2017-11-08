@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Asteroid Game",
   "main": "index.js",
+  "homepage": "./",
   "devDependencies": {
     "react-scripts": "^1.0.14"
   },
